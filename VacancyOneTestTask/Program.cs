@@ -1,9 +1,13 @@
 
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using VacancyOneTestTask.DataAccess;
+
 namespace VacancyOneTestTask
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +18,12 @@ namespace VacancyOneTestTask
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddControllers();
+
+            using var dbConn = new SqliteConnection("Filename=:memory:");
+            await dbConn.OpenAsync();
+            builder.Services.AddDbContext<VacancyOneDbContext>(dbOptions => dbOptions.UseSqlite(dbConn));
+
+            // builder.Services.AddSqlite<VacancyOneDbContext>("Filename=:memory:");
 
             var app = builder.Build();
 
@@ -30,6 +40,13 @@ namespace VacancyOneTestTask
 
 
             app.MapControllers();
+
+            await using (var scope = app.Services.CreateAsyncScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<VacancyOneDbContext>().Database;
+                // await db.EnsureCreatedAsync();
+                await db.MigrateAsync();
+            }
 
             app.Run();
         }
