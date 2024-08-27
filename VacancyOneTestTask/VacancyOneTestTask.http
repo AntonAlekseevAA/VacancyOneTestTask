@@ -1,0 +1,6 @@
+@VacancyOneTestTask_HostAddress = http://localhost:5220
+
+GET {{VacancyOneTestTask_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
