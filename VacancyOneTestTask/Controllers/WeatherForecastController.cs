@@ -1,4 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using VacancyOneTestTask.Abstractions;
+using VacancyOneTestTask.Abstractions.Models;
+using VacancyOneTestTask.Contract;
+using VacancyOneTestTask.Contract.Request;
+using VacancyOneTestTask.Contract.Response;
 using VacancyOneTestTask.DataAccess;
 using VacancyOneTestTask.DataAccess.Entities;
 
@@ -8,54 +14,69 @@ namespace VacancyOneTestTask.Controllers
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
         private readonly ILogger<WeatherForecastController> _logger;
-        private readonly VacancyOneDbContext _dbContext;
+        private readonly ITasksService _tasksService;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, VacancyOneDbContext dbContext)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, ITasksService tasksService)
         {
             _logger = logger;
-            _dbContext = dbContext;
-        }
-
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            this._tasksService = tasksService;
         }
 
         [HttpPut("create")]
-        public async Task<IActionResult> CreateTask(CreateTaskRequest request)
+        public async Task<long> CreateTask(CreateTaskRequest request)
         {
-            var task = new DataAccess.Entities.Task
+            var task = new TicketModel
+            {
+                Date = request.Date, Status = (Abstractions.Models.TicketStatus)request.Status,
+                Files = request.Files.Select(f => new Abstractions.Models.AttachedFile { Url = f.Url }).ToList()
+            };
+            var taskId = await _tasksService.Create(task);
+            return taskId;
+        }
+
+        [HttpGet("{id}")]
+        public async Task<TaskResponse> GetById([FromRoute] long id)
+        {
+            var task = await _tasksService.GetById(id);
+
+            var response = new TaskResponse
+            {
+                Date = task.Date, Id = task.Id, Status = (Contract.TicketStatus)task.Status,
+                Files = task.Files.Select(f => new AttachedFileModel { Url = f.Url }).ToList()
+            };
+            return response;
+        }
+
+        [HttpGet("getRange")]
+        public async Task<List<TaskResponse>> GetRange([FromQuery] GetTasksRequest request)
+        {
+            var tasks = await _tasksService.GetRange(request.Offset, request.Limit);
+            return tasks.Select(t => new TaskResponse
+            {
+                Id = t.Id, Date = t.Date, Status = (Contract.TicketStatus)t.Status,
+                Files = t.Files.Select(f => new Contract.AttachedFileModel { Url = f.Url }).ToList() }).ToList();
+        }
+
+        [HttpPost("{id}")]
+        public async Task<IActionResult> Update([FromRoute] long id, [FromBody] UpdateTaskRequest request)
+        {
+            var task = new UpdateTaskModel
             {
                 Date = request.Date,
-                Status = request.Status,
-                Files = new List<AttachedFile> { new() { Url = "https://www.example.com" } }
-            };
-            
-            _dbContext.Tasks.Add(task); // todo repo
-            await _dbContext.SaveChangesAsync();
-
-            var result = new CreateTaskResponse
-            {
-                Id = task.Id,
-                Date = task.Date,
-                Status = task.Status,
-                Files = task.Files.Select(f => new AttachedFileModel { Id = f.Id, TaskId = f.TaskId, Url = f.Url }).ToList(),
+                Status = (Abstractions.Models.TicketStatus)request.Status,
+                Files = request.Files.Select(f => new Abstractions.Models.AttachedFile { Url = f.Url }).ToList()
             };
 
-            return Ok(result); // todo response model
+            await _tasksService.Update(id, task);
+            return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] long id)
+        {
+            await _tasksService.Delete(id);
+            return Ok();
         }
     }
 }

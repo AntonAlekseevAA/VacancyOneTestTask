@@ -9,7 +9,7 @@ namespace VacancyOneTestTask.DataAccess
         {
         }
 
-        public DbSet<Entities.Task> Tasks { get; set; }
+        public DbSet<Entities.TicketEntity> Tasks { get; set; }
 
         public DbSet<AttachedFile> Files { get; set; }
 
@@ -17,12 +17,12 @@ namespace VacancyOneTestTask.DataAccess
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Entities.Task>()
+            modelBuilder.Entity<Entities.TicketEntity>()
                 .HasKey(t => t.Id);
 
             modelBuilder.Entity<AttachedFile>()
                 .HasKey(t => t.Id);
-            modelBuilder.Entity<Entities.Task>()
+            modelBuilder.Entity<Entities.TicketEntity>()
                 .HasMany(t => t.Files)
                 .WithOne(f => f.Task)
                 .HasForeignKey(f => f.TaskId);

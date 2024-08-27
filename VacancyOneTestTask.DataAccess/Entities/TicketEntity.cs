@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VacancyOneTestTask.DataAccess.Entities
+﻿namespace VacancyOneTestTask.DataAccess.Entities
 {
-    public class Task
+    public class TicketEntity
     {
         public long Id { get; set; }
 

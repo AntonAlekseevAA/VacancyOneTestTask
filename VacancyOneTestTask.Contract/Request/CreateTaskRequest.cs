@@ -1,6 +1,4 @@
-﻿using VacancyOneTestTask.DataAccess.Entities;
-
-namespace VacancyOneTestTask.Controllers
+﻿namespace VacancyOneTestTask.Contract.Request
 {
     /// <summary>
     /// todo move
@@ -11,6 +9,6 @@ namespace VacancyOneTestTask.Controllers
 
         public TicketStatus Status { get; set; }
 
-        // todo files
+        public List<AttachedFileModel> Files { get; set; } = new List<AttachedFileModel>();
     }
 }

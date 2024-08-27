@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>4135adf7-df54-40c5-9738-f6558cc3b9bf</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\VacancyOneTestTask.Abstractions\VacancyOneTestTask.Abstractions.csproj" />
+    <ProjectReference Include="..\VacancyOneTestTask.BL\VacancyOneTestTask.BL.csproj" />
+    <ProjectReference Include="..\VacancyOneTestTask.Contract\VacancyOneTestTask.Contract.csproj" />
     <ProjectReference Include="..\VacancyOneTestTask.DataAccess\VacancyOneTestTask.DataAccess.csproj" />
   </ItemGroup>
 

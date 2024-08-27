@@ -1,7 +1,10 @@
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using VacancyOneTestTask.Abstractions;
+using VacancyOneTestTask.BL;
 using VacancyOneTestTask.DataAccess;
+using VacancyOneTestTask.DataAccess.Repositories;
 
 namespace VacancyOneTestTask
 {
@@ -23,7 +26,7 @@ namespace VacancyOneTestTask
             await dbConn.OpenAsync();
             builder.Services.AddDbContext<VacancyOneDbContext>(dbOptions => dbOptions.UseSqlite(dbConn));
 
-            // builder.Services.AddSqlite<VacancyOneDbContext>("Filename=:memory:");
+            RegisterServices(builder.Services);
 
             var app = builder.Build();
 
@@ -41,14 +44,54 @@ namespace VacancyOneTestTask
 
             app.MapControllers();
 
-            await using (var scope = app.Services.CreateAsyncScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<VacancyOneDbContext>().Database;
-                // await db.EnsureCreatedAsync();
-                await db.MigrateAsync();
-            }
+            await Seed(app.Services);
 
             app.Run();
+        }
+
+        private static IServiceCollection RegisterServices(IServiceCollection services)
+        {
+            services.AddScoped<ITasksRepository, TasksRepository>();
+            services.AddScoped<ITasksService, TasksService>();
+            return services;
+        }
+
+        private static async Task Seed(IServiceProvider services)
+        {
+            await using (var scope = services.CreateAsyncScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<VacancyOneDbContext>();
+                var db = context.Database;
+                
+                await db.MigrateAsync();
+
+
+                var task1 = new DataAccess.Entities.TicketEntity
+                {
+                    Date = new DateTime(2024 - 01 - 01),
+                    Status = DataAccess.Entities.TicketStatus.Created,
+                    Files = new List<DataAccess.Entities.AttachedFile>
+                    {
+                        new() { Url = "https://www.example.com/file1" },
+                        new() { Url = "https://www.example.com/file2"  }
+                    }
+                };
+                context.Tasks.Add(task1);
+
+                var task2 = new DataAccess.Entities.TicketEntity
+                {
+                    Date = new DateTime(2023 - 01 - 01),
+                    Status = DataAccess.Entities.TicketStatus.OnReview,
+                    Files = new List<DataAccess.Entities.AttachedFile>
+                    {
+                        new() { Url = "https://www.example.com/file3" },
+                        new() { Url = "https://www.example.com/file4"  }
+                    }
+                };
+                context.Tasks.Add(task2);
+
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
