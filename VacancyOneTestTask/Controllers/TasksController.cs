@@ -1,38 +1,39 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using VacancyOneTestTask.Abstractions;
 using VacancyOneTestTask.Abstractions.Models;
+using VacancyOneTestTask.BL.Handlers;
 using VacancyOneTestTask.Contract;
 using VacancyOneTestTask.Contract.Request;
 using VacancyOneTestTask.Contract.Response;
-using VacancyOneTestTask.DataAccess;
-using VacancyOneTestTask.DataAccess.Entities;
 
 namespace VacancyOneTestTask.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class TasksController : ControllerBase
     {
-        private readonly ILogger<WeatherForecastController> _logger;
         private readonly ITasksService _tasksService;
+        private readonly IMediator _mediator;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, ITasksService tasksService)
+        public TasksController(ITasksService tasksService, IFileStorageService fileStorageService, IMediator mediator)
         {
-            _logger = logger;
-            this._tasksService = tasksService;
+            _tasksService = tasksService;
+            _mediator = mediator;
         }
 
         [HttpPut("create")]
+        [RequestSizeLimit(long.MaxValue)]
+        [DisableRequestSizeLimit]
         public async Task<long> CreateTask(CreateTaskRequest request)
         {
-            var task = new TicketModel
+            var createTaskRequest = new CreateTaskOperationRequest
             {
-                Date = request.Date, Status = (Abstractions.Models.TicketStatus)request.Status,
-                Files = request.Files.Select(f => new Abstractions.Models.AttachedFile { Url = f.Url }).ToList()
+                Date = request.Date, Status = (Abstractions.Models.TicketStatus)request.Status, Files = request.Files
             };
-            var taskId = await _tasksService.Create(task);
-            return taskId;
+
+            var result = await _mediator.Send(createTaskRequest);
+            return result;
         }
 
         [HttpGet("{id}")]
@@ -55,7 +56,8 @@ namespace VacancyOneTestTask.Controllers
             return tasks.Select(t => new TaskResponse
             {
                 Id = t.Id, Date = t.Date, Status = (Contract.TicketStatus)t.Status,
-                Files = t.Files.Select(f => new Contract.AttachedFileModel { Url = f.Url }).ToList() }).ToList();
+                Files = t.Files.Select(f => new AttachedFileModel { Url = f.Url }).ToList()
+            }).ToList();
         }
 
         [HttpPost("{id}")]

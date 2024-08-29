@@ -1,8 +1,9 @@
-
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using VacancyOneTestTask.Abstractions;
 using VacancyOneTestTask.BL;
+using VacancyOneTestTask.BL.Handlers;
 using VacancyOneTestTask.DataAccess;
 using VacancyOneTestTask.DataAccess.Repositories;
 
@@ -26,7 +27,13 @@ namespace VacancyOneTestTask
             await dbConn.OpenAsync();
             builder.Services.AddDbContext<VacancyOneDbContext>(dbOptions => dbOptions.UseSqlite(dbConn));
 
+            builder.Services.Configure<KestrelServerOptions>(options =>
+            {
+                options.Limits.MaxRequestBodySize = long.MaxValue; // if don't set default value is: 30 MB                
+            });
+
             RegisterServices(builder.Services);
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateTaskOperationRequest>());
 
             var app = builder.Build();
 
@@ -41,7 +48,6 @@ namespace VacancyOneTestTask
 
             app.UseAuthorization();
 
-
             app.MapControllers();
 
             await Seed(app.Services);
@@ -53,6 +59,7 @@ namespace VacancyOneTestTask
         {
             services.AddScoped<ITasksRepository, TasksRepository>();
             services.AddScoped<ITasksService, TasksService>();
+            services.AddSingleton<IFileStorageService, FileStorageService>();
             return services;
         }
 
