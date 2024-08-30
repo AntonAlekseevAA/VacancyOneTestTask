@@ -9,7 +9,7 @@ namespace VacancyOneTestTask.Controllers
     public class FilesController : ControllerBase
     {
         private const string ContentType = "application/json";
-        private IMediator _mediator;
+        private readonly IMediator _mediator;
 
         public FilesController(IMediator mediator)
         {
@@ -17,10 +17,17 @@ namespace VacancyOneTestTask.Controllers
         }
 
         [HttpGet("{fileName}")]
-        public async Task<IActionResult> Index([FromRoute] string fileName)
+        public async Task<IActionResult> DownloadFile([FromRoute] string fileName)
         {
             var result = await _mediator.Send(new GetFileRequest { FileName = fileName });
             return File(result, ContentType);
+        }
+
+        [HttpDelete("{fileName}")]
+        public async Task<IActionResult> Delete([FromRoute] string fileName)
+        {
+            await _mediator.Send(new DeleteFileRequest { FileName = fileName });
+            return Ok();
         }
     }
 }

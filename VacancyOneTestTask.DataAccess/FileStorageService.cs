@@ -29,9 +29,17 @@ namespace VacancyOneTestTask.DataAccess
             }
         }
 
-        public Task Delete(string fileName)
+        public async Task Delete(string fileName)
         {
-            throw new NotImplementedException("Some implementation");
+            try
+            {
+                File.Delete(fileName);
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
         }
 
         public async Task<byte[]> Get(string filename)

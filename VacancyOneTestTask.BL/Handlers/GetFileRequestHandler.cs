@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Microsoft.Extensions.Logging;
 using VacancyOneTestTask.Abstractions;
 
 namespace VacancyOneTestTask.BL.Handlers
@@ -12,12 +11,10 @@ namespace VacancyOneTestTask.BL.Handlers
     public class GetFileRequestHandler : IRequestHandler<GetFileRequest, byte[]>
     {
         private readonly IFileStorageService _fileStorageService;
-        private readonly ILogger<GetFileRequestHandler> _logger;
 
-        public GetFileRequestHandler(IFileStorageService fileStorageService, ILogger<GetFileRequestHandler> logger)
+        public GetFileRequestHandler(IFileStorageService fileStorageService)
         {
             _fileStorageService = fileStorageService;
-            _logger = logger;
         }
 
         public async Task<byte[]> Handle(GetFileRequest request, CancellationToken cancellationToken)
